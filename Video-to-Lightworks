@@ -1,0 +1,57 @@
+#!/bin/bash
+## Script - Video conversion to a Lightworks friendly media - Using FFmpeg and notify via notify-send.
+## 
+## Dependencies: notify-osd, ffmpeg
+## Testet on Fedora 25
+##
+## Date:      21. April 2017
+## Author:    Thor Miller Grotle
+## Homepage:  https://www.itso.dk
+
+# Variables for media encoder
+VIDEO="$1"  
+MIMETYPE="video"
+CONTAINER="mxf"
+OUTPUTFOLDER=""
+OPTIONS="-vcodec mpeg2video -qscale 1 -qmin 1 -intra -ar 48000"
+NEWFILE="${VIDEO%.*}-encoded.$CONTAINER"
+#TIMESTAMP
+
+# Filepaths
+ENCODER="/usr/bin/ffmpeg"
+NOTIFY="/usr/bin/notify-send"
+CONVERTICON='-i /usr/share/icons/gnome/32x32/categories/applications-multimedia.png'
+CONVERTICONFAIL='-i /usr/share/icons/gnome/32x32/status/dialog-error.png'
+
+
+# Messages
+CONVERTHEAD="FFmpeg Encoding"
+CONVERTSTART="Starting convert $VIDEO to $NEWFILE"
+CONVERTSUCCESS="Success in convert $VIDEO to $NEWFILE"
+CONVERTFAIL="Something has gone wrong: $1"
+CONVERTNOTMIME="File: $VIDEO is not a video file"
+
+
+
+# check if encoder and notify-send exist, if not quit program
+if [ -f $ENCODER ] && [ -f $NOTIFY ]
+	then
+	#checks if icons exists, else disable icons
+        #if [[ ! -f $CONVERTICON  || ! -f $CONVERTICONFAIL ]]
+        #        then
+        #        CONVERTICON=""
+        #        CONVERTICONFAIL=""
+  	#fi
+        # checks filetype, if video continue
+        if file -b --mime-type "$VIDEO" | grep "$FILETYPE"
+                then
+                # Nofify user of convertion start
+                $NOTIFY $CONVERTICON "$CONVERTHEAD" "$CONVERTSTART"
+                
+                $ENCODER -i "$VIDEO" $OPTIONS "$OUTPUTFOLDER$NEWFILE" && $NOTIFY $CONVERTICON "$CONVERTHEAD" "$CONVERTSUCCESS" || $NOTIFY $CONVERTICONFAIL "$CONVERTHEAD" "$CONVERTFAIL"
+        else
+	$NOTIFY $CONVERTICONFAIL "$CONVERTHEAD" "$CONVERTNOTMIME"
+        fi
+else
+        echo "Unable to continue: files $ENCODER or $NOTIFY does noet exist"
+fi

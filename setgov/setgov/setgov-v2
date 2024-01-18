@@ -1,0 +1,100 @@
+#!/usr/bin/bash
+## 
+## Dependencies: notify-osd
+##
+## Date:      28. September 2021
+## Author:    Thor Miller Grotle
+## Homepage:  https://www.itso.dk
+
+#This script toogles Powerprofile/Governor betweeen powersave/performance
+
+#Note, for Intel systems, you might set: intel_pstate=disable in the GRUB_CMDLINE_LINUX_DEFAULT field, in file  /etc/default/grub, and run update-grub
+
+# Govenernor modes available: performance, powersave, userspace, ondemand, conservative
+#
+SETUP () {
+if [ "$EUID" -ne 0 ]
+  then
+  echo "setgov sudo file can not be written, Please run as root"
+  exit
+else
+#--
+read -p "Allow all to change governor? (This will install/etc/sudoers.d/setgov) [y,n] " n1
+if [ $n1 == "y" ] || [ $n1 == "Y" ]; then
+SUDOFILE="/etc/sudoers.d/setgov"
+tee <<'EOF' > $SUDOFILE
+## Allow write to governor settings
+Cmnd_Alias C_SETGOV = \
+  /usr/bin/tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+ALL ALL = (root) NOPASSWD: C_SETGOV
+EOF
+
+read -p "install setgov into /usr/bin/setgov?: [y,n)" n1
+if [ $n1 == "y" ] || [ $n1 == "Y" ]; then
+sudo cp setgov /usr/bin/setgov
+sudo chown root:root /usr/bin/setgov
+sudo chmod 755 /usr/bin/setgov
+fi
+
+echo "Note, for Intel systems, you might set: intel_pstate=disable in the GRUB_CMDLINE_LINUX_DEFAULT field, in file  /etc/default/grub, and run update-grub"
+else 
+echo "nothing else to do"
+  fi
+fi
+}
+
+
+TOGGLE () {
+if [[ $GOV1234 == performance ]]; then
+governor=powersave
+SETGOV
+elif [[ $GOV1234 == powersave ]]; then
+governor=ondemand
+SETGOV
+elif [[ $GOV1234 == ondemand ]]; then
+governor=performance
+SETGOV
+else
+governor=powersave
+SETGOV
+
+fi
+}
+
+SETGOV ( ) {
+echo "Governor was set to " $GOV1234 " now setting to:"
+echo $governor | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+/usr/bin/notify-send "Governor set to" $governor
+}
+
+
+STATUS () {
+echo Running status
+cat /proc/cpuinfo | grep "model name" | head -1
+cat /proc/cpuinfo | grep "cpu cores" | head -1
+cat /proc/cpuinfo | grep "[c]pu MHz"
+echo "Listing all cores governor settings:"
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+}
+
+
+
+
+
+### MAIN APPLICATION
+# get current governor - always run
+GOV123=$(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor)
+GOV1234=$(echo $GOV123 | cut -d " " -f1)
+
+# Getting status of input variable
+if [ $1 == toggle ]; then
+TOGGLE
+elif [ $1 == setup ]; then
+SETUP
+elif [ $1 == status ]; then
+STATUS
+elif [ $1 == powersave ] || [ $1 == ondemand ] || [ $1 == performance ] || [ $1 == userspace ] || [ $1 == conservative ]; then
+governor=$1
+SETGOV
+fi
+

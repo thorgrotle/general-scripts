@@ -1,0 +1,19 @@
+#!/usr/bin/bash
+clear
+echo "Disk/Internet transfer speed calculator"
+
+read -p "Speed in MB?: " SPEED
+read -p "Data amount in GB?: " DATA
+DATAMINUTE=$(expr $SPEED \* 60)
+DATAHOUR=$(expr $SPEED \* 36 / 10)
+DATACOPY=$(expr $DATA / $DATAHOUR)
+DATACOPYMIN=$(expr $DATACOPY \* 60)
+echo "---"
+echo "Transfering "$DATA"GB at the rate of "$SPEED"MB/S"
+echo ""
+echo "---"
+echo "Data pr minutes in MB: " $DATAMINUTE
+echo "Data pr hour in GB: " $DATAHOUR
+echo "Time in hours to copy: " $DATACOPY
+echo "Time in minutes for copy: " $DATACOPYMIN
+

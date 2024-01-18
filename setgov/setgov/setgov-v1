@@ -1,0 +1,45 @@
+#!/usr/bin/bash
+## 
+## Dependencies: notify-osd
+##
+## Date:      28. September 2021
+## Author:    Thor Miller Grotle
+## Homepage:  https://www.itso.dk
+
+#This script toogles Powerprofile/Governor betweeen powersave/performance
+
+#Note, for Intel systems, you might set: intel_pstate=disable in the GRUB_CMDLINE_LINUX_DEFAULT field, in file  /etc/default/grub, and run update-grub
+
+# Govenernor modes available: performance, powersave, userspace, ondemand, conservative
+
+
+
+
+# get current governor
+GOV123=$(cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor)
+GOV1234=$(echo $GOV123 | cut -d " " -f1)
+
+
+# If governor is set to performance, set to powersave
+if [[ $GOV1234 == performance ]]; then
+echo "Governor was to performance, now setting to:"
+echo "powersave" | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+/usr/bin/notify-send "Governor set to powersave"
+
+# If governor is set to powersave, set to performance
+elif [[ $GOV1234 == powersave ]]; then
+echo "Governor was set to POWERSAVE, now setting to:"
+echo "performance" | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+/usr/bin/notify-send "Governor set to performance"
+
+# If governor is set to anything else, set to powersave
+else
+echo "Governor was set to " $GOV1234 " now setting to:"
+echo "powersave" | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor
+/usr/bin/notify-send "Governor set to powersave"
+fi 
+
+# showing new governor on all CPU cores
+echo ""
+echo "Listing new core governors settings:"
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor

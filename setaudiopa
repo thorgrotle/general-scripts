@@ -1,0 +1,59 @@
+#!/bin/bash
+
+'''
+ Script - This will set Pulseaudio to predefined device after autocomplete
+
+ Dependencies: notify-osd, pulseaudio
+ Testet on Fedora 26/ Ubuntu 18.04
+
+ Date:      25 October 2017
+ Author:    Thor Miller Grotle
+ Homepage:  https://www.itso.dk
+
+
+To run as local user put file in ~/bin
+
+To detect audio devices run:
+pacmd list-sinks | grep name:
+pacmd list-sources | grep name:
+'''
+
+# Favorite Audiodevices
+favOutput="usb-PreSonus"
+#favOutput="pci-0000"
+favInput="usb-PreSonus"
+
+# Changing favorite input device
+paInput="$(pacmd list-sources | grep input.$favInput | cut -d '<' -f2 | cut -d '>' -f1)"
+if [ "$paInput" != "" ]
+  then
+   echo "Setting audio input to: "$paInput
+   pacmd set-default-source $paInput
+   inputSet=True
+  else
+   echo "No Audio input device found with name: "$paInput
+fi
+
+# Changing favorite output device
+paOutput="$(pacmd list-sinks | grep output.$favOutput | cut -d '<' -f2 | cut -d '>' -f1)"
+if [ "$paOutput" != "" ]
+  then
+   echo "Setting audio output to: "$paOutput
+   pacmd set-default-sink $paOutput
+   outputSet=True
+  else
+   echo "No Audio output device found with name: "$paOutput
+fi
+
+# Notify user & system 
+if [[ $inputSet == True && $outputSet == True ]]
+ then
+  notify-send "Audio input settings changed to $favInput" "Audio output settings changed to $favOutput" -i /usr/share/icons/Adwaita/32x32/devices/audio-headset.png
+elif [[ $inputSet == True ]]
+ then
+  notify-send "Audio input settings changed to $favInput" -i /usr/share/icons/Adwaita/32x32/devices/audio-input-microphone.png 
+elif [[ $outputSet = True ]] 
+ then
+ notify-send "Audio output settings changed to $favOutput" -i /usr/share/icons/Adwaita/32x32/devices/audio-headphones.png 
+fi
+
